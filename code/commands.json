@@ -1,0 +1,19 @@
+[
+    {
+        "name" : "spank",
+        "description" : "spank someone",
+        "options": [
+            {
+                "name": "user",
+                "description": "user to spank",
+                "type": 6,
+                "required": true,
+                "autocomplete": true
+            }
+        ]
+    },
+    {
+        "name" : "set",
+        "description" : "set command channel"
+    }
+]
