@@ -15,5 +15,18 @@
     {
         "name" : "set",
         "description" : "set command channel"
+    },
+    {
+        "name" : "msgasbot",
+        "description" : "send message as bot",
+        "options": [
+            {
+                "name": "channel",
+                "description": "channel to send message to",
+                "type": 7,
+                "required": true,
+                "autocomplete": true
+            }
+        ]
     }
 ]

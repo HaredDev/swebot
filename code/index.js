@@ -1,4 +1,5 @@
 const { Client, GatewayIntentBits, CommandInteractionOptionResolver  } = require('discord.js');
+const { InteractionResponseType } = require('discord-interactions');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
@@ -69,6 +70,7 @@ client.on('interactionCreate', async interaction => {
 
     const { commandName, member, channel, options } = interaction;
 
+    //set
     if (commandName === 'set') {
         if(hasPerms(member.roles.cache)){
 
@@ -91,7 +93,9 @@ client.on('interactionCreate', async interaction => {
             }
             return;
 
-        }       
+        }
+
+    //spank       
     } else if (commandName === 'spank') {
         const userArgument = options.getUser('user');
 
@@ -117,6 +121,70 @@ client.on('interactionCreate', async interaction => {
         } else {
             await interaction.reply({ content: "Missing argument \'user\'.", ephemeral: true });
         }
+    } else if (commandName === "msgasbot") {
+        const channelArgument = options.getUser('channel');
+
+        if(hasPerms(member.roles.cache) || channelArgument.guildId != channel.guildId){
+
+            await interaction.reply({
+                content: 'Write your message!',
+                components: [
+                    {
+                        type: 'ACTION_ROW',
+                        components: [
+                            {
+                                type: 'BUTTON',
+                                label: 'As Embed msg',
+                                style: 'PRIMARY',
+                                customId: 'embed'
+                            },
+                            {
+                                type: 'BUTTON',
+                                label: 'As Normal msg',
+                                style: 'PRIMARY',
+                                customId: 'std'
+                            },
+                            {
+                                type: 'msg',
+                                customId: 'msg_input',
+                                placeholder: 'Type your message here...',
+                                minValues: 1,
+                                maxValues: 1,
+                                options: [],
+                                data: JSON.stringify({channel : channelArgument.id})
+                            }
+                        ]
+                    }
+                ]
+            });
+
+        } else {
+
+            try {
+                await interaction.reply({ content: "You don't have the required role or the channel is not in the same server as where the command was executed!", ephemeral: true });
+            } catch (error) {
+                console.error('Failed to send ephemeral message:', error);
+            }
+            return;
+
+        }
+
+
+
+        if(interaction.isButton()){
+            const buttonId = interaction.customId;
+            const message = interaction.message;
+
+            const content = message.components[0].components.find(component => component.type === 'msg_input').values[0];
+            const channel = JSON.parse(message.components[0].components.find(component => component.type === 'msg_input').data).channel;
+
+            if(buttonId === 'std')
+                client.channels.fetch(channel).send(content);
+            else if(buttonId === 'embed')
+                client.channels.fetch(channel).send({ embeds: [new MessageEmbed(content)] });
+        }
+
+
     }
 
 });
