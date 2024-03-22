@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, CommandInteractionOptionResolver  } = require('discord.js');
+const { Client, GatewayIntentBits, CommandInteractionOptionResolver, TextInputBuilder, TextInputStyle, ModalBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
 const { InteractionResponseType } = require('discord-interactions');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const { REST } = require('@discordjs/rest');
@@ -66,125 +66,122 @@ client.once('ready', async () => {
 });
 
 client.on('interactionCreate', async interaction => {
-    if (!interaction.isCommand()) return;
+    if (interaction.isCommand()){
 
-    const { commandName, member, channel, options } = interaction;
+        const { commandName, member, channel, options } = interaction;
 
-    //set
-    if (commandName === 'set') {
-        if(hasPerms(member.roles.cache)){
+        //set
+        if (commandName === 'set') {
+            if(hasPerms(member.roles.cache)){
 
-            if(!storage.channels.includes(channel.id))
-                storage.channels.push(channel.id);
+                if(!storage.channels.includes(channel.id))
+                    storage.channels.push(channel.id);
 
-            try {
-                await interaction.reply({ content: "Channel is set!", ephemeral: true });
-            } catch (error) {
-                console.error('Failed to send ephemeral message:', error);
-            }
-            return;
+                try {
+                    await interaction.reply({ content: "Channel is set!", ephemeral: true });
+                } catch (error) {
+                    console.error('Failed to send ephemeral message:', error);
+                }
+                return;
 
-        } else {
+            } else {
 
-            try {
-                await interaction.reply({ content: "You don't have the required role.", ephemeral: true });
-            } catch (error) {
-                console.error('Failed to send ephemeral message:', error);
-            }
-            return;
+                try {
+                    await interaction.reply({ content: "You don't have the required role.", ephemeral: true });
+                } catch (error) {
+                    console.error('Failed to send ephemeral message:', error);
+                }
+                return;
 
-        }
-
-    //spank       
-    } else if (commandName === 'spank') {
-        const userArgument = options.getUser('user');
-
-        if(!permChannel(channel.id)){
-            await interaction.reply({ content: "This channel is not a command channel.", ephemeral: true });
-            return;
-        }
-
-        if (userArgument) {
-            const user = await client.users.fetch(userArgument.id);
-
-            let count = 0;
-
-            if(storage.spanks.hasOwnProperty(user.username)){
-                count = storage.spanks[user.username];
             }
 
-            count++;
+        //spank       
+        } else if (commandName === 'spank') {
+            const userArgument = options.getUser('user');
 
-            storage.spanks[user.username] = count;
+            if(!permChannel(channel.id)){
+                await interaction.reply({ content: "This channel is not a command channel.", ephemeral: true });
+                return;
+            }
 
-            interaction.reply(`<@${member.id}> spanks <@${user.id}> ` + count + ' times!');
-        } else {
-            await interaction.reply({ content: "Missing argument \'user\'.", ephemeral: true });
+            if (userArgument) {
+                const user = await client.users.fetch(userArgument.id);
+
+                let count = 0;
+
+                if(storage.spanks.hasOwnProperty(user.username)){
+                    count = storage.spanks[user.username];
+                }
+
+                count++;
+
+                storage.spanks[user.username] = count;
+
+                interaction.reply(`<@${member.id}> spanks <@${user.id}> ` + count + ' times!');
+            } else {
+                await interaction.reply({ content: "Missing argument \'user\'.", ephemeral: true });
+            }
+        } else if (commandName === "msgasbot") {
+            const channelArgument = options.getChannel('channel');
+            const embedArgument = options.getBoolean('embed');
+            
+            if(hasPerms(member.roles.cache) || channelArgument.guildId != channel.guildId){
+
+                const modal = new ModalBuilder()
+                .setCustomId('msginput')
+                .setTitle('Write your message');
+
+                const msg = new TextInputBuilder()
+                .setCustomId('msg')
+                .setLabel('The message to write')
+                .setStyle(TextInputStyle.Paragraph)
+                .setRequired(true)
+
+                storage.msginput = {
+                    channel : channelArgument.id,
+                    embed : embedArgument
+                }
+                
+
+                const first = new ActionRowBuilder().addComponents(msg);
+
+                modal.addComponents(first);
+                await interaction.showModal(modal);
+
+            } else {
+
+                try {
+                    await interaction.reply({ content: "You don't have the required role or the channel is not in the same server as where the command was executed!", ephemeral: true });
+                } catch (error) {
+                    console.error('Failed to send ephemeral message:', error);
+                }
+                return;
+
+            }
         }
-    } else if (commandName === "msgasbot") {
-        const channelArgument = options.getUser('channel');
 
-        if(hasPerms(member.roles.cache) || channelArgument.guildId != channel.guildId){
+    }
 
-            await interaction.reply({
-                content: 'Write your message!',
-                components: [
-                    {
-                        type: 'ACTION_ROW',
-                        components: [
-                            {
-                                type: 'BUTTON',
-                                label: 'As Embed msg',
-                                style: 'PRIMARY',
-                                customId: 'embed'
-                            },
-                            {
-                                type: 'BUTTON',
-                                label: 'As Normal msg',
-                                style: 'PRIMARY',
-                                customId: 'std'
-                            },
-                            {
-                                type: 'msg',
-                                customId: 'msg_input',
-                                placeholder: 'Type your message here...',
-                                minValues: 1,
-                                maxValues: 1,
-                                options: [],
-                                data: JSON.stringify({channel : channelArgument.id})
-                            }
-                        ]
-                    }
-                ]
+
+    if(interaction.isModalSubmit()){
+
+        if(interaction.customId === "msginput"){
+            let data = storage[interaction.customId];
+            let msg = interaction.fields.getTextInputValue('msg');
+            const channel = await client.channels.fetch(data.channel);
+            if(data.embed){
+                const embed = new EmbedBuilder().setDescription(msg);
+                msg = { embeds: [embed] };
+            }
+                await channel.send(msg);
+
+            delete storage[interaction.customId];
+            interaction.reply({
+                content: 'Message sent!',
+                ephemeral: true
             });
-
-        } else {
-
-            try {
-                await interaction.reply({ content: "You don't have the required role or the channel is not in the same server as where the command was executed!", ephemeral: true });
-            } catch (error) {
-                console.error('Failed to send ephemeral message:', error);
-            }
-            return;
-
+            
         }
-
-
-
-        if(interaction.isButton()){
-            const buttonId = interaction.customId;
-            const message = interaction.message;
-
-            const content = message.components[0].components.find(component => component.type === 'msg_input').values[0];
-            const channel = JSON.parse(message.components[0].components.find(component => component.type === 'msg_input').data).channel;
-
-            if(buttonId === 'std')
-                client.channels.fetch(channel).send(content);
-            else if(buttonId === 'embed')
-                client.channels.fetch(channel).send({ embeds: [new MessageEmbed(content)] });
-        }
-
-
     }
 
 });
