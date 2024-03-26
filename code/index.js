@@ -139,10 +139,11 @@ client.on('interactionCreate', async interaction => {
                 .setStyle(TextInputStyle.Paragraph)
                 .setRequired(true)
 
-                storage.msginput = {
+                storage.msgcustominput = {
                     channel : channelArgument.id,
                     embed : embedArgument
                 }
+                
                 
 
                 const first = new ActionRowBuilder().addComponents(msg);
@@ -271,7 +272,7 @@ client.on('interactionCreate', async interaction => {
 
     if(interaction.isModalSubmit()){
 
-        if(interaction.customId === 'msginput') {
+        if(interaction.customId === 'msgcustominput') {
             let data = storage[interaction.customId];
             let msg = interaction.fields.getTextInputValue('msg');
             const channel = await client.channels.fetch(data.channel);
