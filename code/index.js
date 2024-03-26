@@ -241,12 +241,12 @@ client.on('interactionCreate', async interaction => {
             const buttonYes = new ButtonBuilder()
             .setCustomId('deleteSure')
             .setLabel('Yes I\'m sure')
-            .setStyle(ButtonStyle.Primary);
+            .setStyle(ButtonStyle.Danger);
 
             const buttonNo = new ButtonBuilder()
             .setCustomId('deleteNo')
             .setLabel('No I\'m not')
-            .setStyle(ButtonStyle.Danger);
+            .setStyle(ButtonStyle.Primary);
 
             const row = new ActionRowBuilder()
                 .addComponents(buttonYes, buttonNo);
