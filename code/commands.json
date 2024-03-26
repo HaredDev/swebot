@@ -1,7 +1,7 @@
 [
     {
         "name" : "spank",
-        "description" : "spank someone",
+        "description" : "Spank someone",
         "options": [
             {
                 "name": "user",
@@ -35,5 +35,9 @@
                 "autocomplete": true
             }
         ]
+    },
+    {
+        "name" : "msgmod",
+        "description" : "Message the moderator team button"
     }
 ]

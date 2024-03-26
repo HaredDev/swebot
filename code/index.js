@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, CommandInteractionOptionResolver, TextInputBuilder, TextInputStyle, ModalBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+const { Client, ChannelType, PermissionsBitField, GatewayIntentBits, ButtonBuilder, TextInputBuilder, TextInputStyle, ModalBuilder, ActionRowBuilder, EmbedBuilder, ButtonStyle } = require('discord.js');
 const { InteractionResponseType } = require('discord-interactions');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const { REST } = require('@discordjs/rest');
@@ -7,6 +7,8 @@ const jsonUtils = require('./jsonUtils.js');
 const fs = require('fs');
 const commands = require("../code/commands.json");
 const cred = require("../cred/loginfo.json");
+const { channel } = require('diagnostics_channel');
+const { memoryUsage } = require('process');
 let storage = JSON.parse('{}');
 
 loadStorage()
@@ -66,9 +68,9 @@ client.once('ready', async () => {
 });
 
 client.on('interactionCreate', async interaction => {
-    if (interaction.isCommand()){
 
-        const { commandName, member, channel, options } = interaction;
+    const { commandName, member, channel, options } = interaction;
+    if (interaction.isCommand()){
 
         //set
         if (commandName === 'set') {
@@ -121,14 +123,14 @@ client.on('interactionCreate', async interaction => {
             } else {
                 await interaction.reply({ content: "Missing argument \'user\'.", ephemeral: true });
             }
-        } else if (commandName === "msgasbot") {
+        } else if (commandName === 'msgasbot') {
             const channelArgument = options.getChannel('channel');
             const embedArgument = options.getBoolean('embed');
             
             if(hasPerms(member.roles.cache) || channelArgument.guildId != channel.guildId){
 
                 const modal = new ModalBuilder()
-                .setCustomId('msginput')
+                .setCustomId('msgcustominput')
                 .setTitle('Write your message');
 
                 const msg = new TextInputBuilder()
@@ -155,17 +157,121 @@ client.on('interactionCreate', async interaction => {
                 } catch (error) {
                     console.error('Failed to send ephemeral message:', error);
                 }
-                return;
+
+            }
+        } else if (commandName === 'msgmod') {
+            if(hasPerms(member.roles.cache)) {
+
+                const button = new ButtonBuilder()
+                    .setCustomId('createTicket')
+                    .setLabel('Create Ticket')
+                    .setStyle(ButtonStyle.Primary);
+
+                const row = new ActionRowBuilder()
+                    .addComponents(button);
+
+                channel.send({
+                    content : 'Press the \"Create Ticket\" button to create a ticket. You can only create one ticket at a time!',
+                    components : [row]
+                });
+
+                await interaction.reply({ content: "Button created!", ephemeral: true });
 
             }
         }
 
     }
 
+    if(interaction.isButton()){
+
+        let member = interaction.user;
+        if(interaction.customId === 'createTicket') {
+            if('ticketCh' in storage){
+                if(storage.ticketCh.includes(member.username)){
+                    await interaction.reply({ content: "You already have a ticket opened!", ephemeral: true });
+                    return;
+                }
+                storage.ticketCh.push(member.username);
+            } else {
+                storage.ticketCh = [
+                    member.username
+                ];
+            }
+            const ch = await channel.guild.channels.create({
+                name : member.username,
+                type: ChannelType.GuildText,
+                parent: channel.parent,
+                permissionOverwrites: [
+                    {
+                        id: channel.guild.roles.everyone.id,
+                        deny: [PermissionsBitField.Flags.ViewChannel]
+                    },
+                    {
+                        id: member.id,
+                        allow: [PermissionsBitField.Flags.ViewChannel]
+                    },
+                    {
+                        id: channel.guild.roles.cache.find(r => r.name === 'moderator').id,
+                        allow: [PermissionsBitField.Flags.ViewChannel]
+                    }
+                ]
+            });
+
+            const button = new ButtonBuilder()
+            .setCustomId('deleteTicket')
+            .setLabel('Delete Ticket')
+            .setStyle(ButtonStyle.Primary);
+
+            const row = new ActionRowBuilder()
+                .addComponents(button);
+
+            const sentMessage = await ch.send({
+                content : '',
+                components : [row]
+            });
+
+            sentMessage.pin();
+
+            await interaction.deferUpdate();
+
+        }
+
+        if(interaction.customId === 'deleteTicket') {
+            const buttonYes = new ButtonBuilder()
+            .setCustomId('deleteSure')
+            .setLabel('Yes I\'m sure')
+            .setStyle(ButtonStyle.Primary);
+
+            const buttonNo = new ButtonBuilder()
+            .setCustomId('deleteNo')
+            .setLabel('No I\'m not')
+            .setStyle(ButtonStyle.Danger);
+
+            const row = new ActionRowBuilder()
+                .addComponents(buttonYes, buttonNo);
+
+            channel.send({
+                content : 'Are you sure?',
+                components : [row]
+            });
+            await interaction.deferUpdate();
+        }
+
+        if(interaction.customId === 'deleteSure') {
+            storage.ticketCh = storage.ticketCh.filter(str => str !== member.username);
+            channel.delete();
+        }
+
+        if(interaction.customId === 'deleteNo') {
+            const msg = await channel.messages.fetch(interaction.message.id);
+            msg.delete();
+        }
+
+    }
 
     if(interaction.isModalSubmit()){
 
-        if(interaction.customId === "msginput"){
+        if(interaction.customId === 'msginput') {
             let data = storage[interaction.customId];
             let msg = interaction.fields.getTextInputValue('msg');
             const channel = await client.channels.fetch(data.channel);
@@ -180,7 +286,6 @@ client.on('interactionCreate', async interaction => {
                 content: 'Message sent!',
                 ephemeral: true
             });
-            
         }
     }
 
