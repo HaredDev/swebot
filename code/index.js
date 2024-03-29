@@ -109,15 +109,7 @@ client.on('interactionCreate', async interaction => {
             if (userArgument) {
                 const user = await client.users.fetch(userArgument.id);
 
-                let count = 0;
-
-                if(storage.spanks.hasOwnProperty(user.username)){
-                    count = storage.spanks[user.username];
-                }
-
-                count++;
-
-                storage.spanks[user.username] = count;
+                let count = Math.floor(Math.random() * 210);
 
                 interaction.reply(`<@${member.id}> spanks <@${user.id}> ` + count + ' times!');
             } else {
@@ -230,8 +222,12 @@ client.on('interactionCreate', async interaction => {
                 content : '',
                 components : [row]
             });
-
+            
+            ch.send(`<@&${ch.guild.roles.cache.find(r => r.name === 'moderator').id}>`);
+            
             sentMessage.pin();
+
+            
 
             await interaction.deferUpdate();
 
