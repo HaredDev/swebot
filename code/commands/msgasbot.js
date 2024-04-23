@@ -57,7 +57,8 @@ class MsgAsBot{
                 const embed = this.core.createEmbedBuilder().setDescription(msg);
                 msg = { embeds: [embed] };
             }
-                await channel.send(msg);
+            
+            await channel.send(msg);
 
             delete this.core.storage[interaction.customId];
             interaction.reply({
