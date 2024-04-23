@@ -92,9 +92,10 @@ dcClient = client;
 
         client.on("messageCreate", async (message) => {
             if(message.author.bot) return false;
-            if(message.stickers.size > 0 || message.attachments.size > 0 || message.channel.id === '1216467034490011742') return false;
+            if(message.stickers.size > 0 || message.attachments.size > 0 || message.type != 0) return false;
             let guild = message.guild;
             let user = await guild.members.fetch(message.author.id);
+            console.log(message);
             if(!this.hasPerms(user.roles.cache) && message.content == ''){
                 message.delete();
                 const mes = await message.channel.send(`<@${user.id}> You are not allowed to create polls!`);
