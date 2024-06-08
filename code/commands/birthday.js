@@ -36,16 +36,23 @@ class Birthday{
                         } catch (error) {
                             console.error('Failed to send ephemeral message:', error);
                         }
+                        return;
                     }
                 });
+                try {
+                    await interaction.reply({ content: "That user hasn't set their birthday yet!", ephemeral: true });
+                } catch (error) {
+                    console.error('Failed to send ephemeral message:', error);
+                }
+                return;
+            } else {
+                try {
+                    await interaction.reply({ content: "There are no birthdays added yet!", ephemeral: true });
+                } catch (error) {
+                    console.error('Failed to send ephemeral message:', error);
+                }
                 return;
             }
-            try {
-                await interaction.reply({ content: "That user hasn't set their birthday yet!", ephemeral: true });
-            } catch (error) {
-                console.error('Failed to send ephemeral message:', error);
-            }
-            return;
         } else if (!regex.test(dateString)) {
             try {
                 await interaction.reply({ content: "The date was in a wrong format! It should be in yyyy-mm-dd", ephemeral: true });
