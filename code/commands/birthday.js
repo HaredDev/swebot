@@ -29,16 +29,19 @@ class Birthday{
             return;
         } else if (user != null) {
             if(Array.isArray(storage["birthdays"])) {
+                let userExist = false;
                 storage.birthdays.forEach(time => {
                     if(time.user == user.id) {
+                        userExist = true;
                         try {
                             interaction.reply({ content: "The birthday of " + `<@${user.id}>` + " is " + time.date, ephemeral: true });
                         } catch (error) {
                             console.error('Failed to send ephemeral message:', error);
                         }
-                        return;
                     }
                 });
+                if(userExist)
+                    return;
                 try {
                     await interaction.reply({ content: "That user hasn't set their birthday yet!", ephemeral: true });
                 } catch (error) {
