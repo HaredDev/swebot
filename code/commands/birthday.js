@@ -21,9 +21,9 @@ class Birthday{
         let storage = this.core.storage;
 
         if (user == null && dateString == null) {
-            this.sayUserBirthday(member, true);
+            return this.sayUserBirthday(member, true);
         } else if (user != null) {
-            this.sayUserBirthday(user, false);
+            return this.sayUserBirthday(user, false);
         } else if (!regex.test(dateString)) {
             try {
                 await interaction.reply({ content: "The date was in a wrong format! It should be in yyyy-mm-dd", ephemeral: true });
