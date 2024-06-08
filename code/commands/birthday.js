@@ -21,41 +21,9 @@ class Birthday{
         let storage = this.core.storage;
 
         if (user == null && dateString == null) {
-            try {
-                await interaction.reply({ content: "You have to either input a user or your birthday!", ephemeral: true });
-            } catch (error) {
-                console.error('Failed to send ephemeral message:', error);
-            }
-            return;
+            this.sayUserBirthday(member, true);
         } else if (user != null) {
-            if(Array.isArray(storage["birthdays"])) {
-                let userExist = false;
-                storage.birthdays.forEach(time => {
-                    if(time.user == user.id) {
-                        userExist = true;
-                        try {
-                            interaction.reply({ content: "The birthday of " + `<@${user.id}>` + " is " + time.date, ephemeral: true });
-                        } catch (error) {
-                            console.error('Failed to send ephemeral message:', error);
-                        }
-                    }
-                });
-                if(userExist)
-                    return;
-                try {
-                    await interaction.reply({ content: "That user hasn't set their birthday yet!", ephemeral: true });
-                } catch (error) {
-                    console.error('Failed to send ephemeral message:', error);
-                }
-                return;
-            } else {
-                try {
-                    await interaction.reply({ content: "There are no birthdays added yet!", ephemeral: true });
-                } catch (error) {
-                    console.error('Failed to send ephemeral message:', error);
-                }
-                return;
-            }
+            this.sayUserBirthday(user, false);
         } else if (!regex.test(dateString)) {
             try {
                 await interaction.reply({ content: "The date was in a wrong format! It should be in yyyy-mm-dd", ephemeral: true });
@@ -102,6 +70,37 @@ class Birthday{
             console.error('Failed to send ephemeral message:', error);
         }
 
+    }
+
+    async sayUserBirthday(user, isSender) {
+        if(Array.isArray(storage["birthdays"])) {
+            let userExist = false;
+            storage.birthdays.forEach(time => {
+                if(time.user == user.id) {
+                    userExist = true;
+                    try {
+                        interaction.reply({ content: (isSender ? "Your birthday" : "The birthday of " + `<@${user.id}>`) + " is " + time.date, ephemeral: true });
+                    } catch (error) {
+                        console.error('Failed to send ephemeral message:', error);
+                    }
+                }
+            });
+            if(userExist)
+                return;
+            try {
+                await interaction.reply({ content: (isSender ? "You haven't set your" : "That user hasn't set their") + " birthday yet!", ephemeral: true });
+            } catch (error) {
+                console.error('Failed to send ephemeral message:', error);
+            }
+            return;
+        } else {
+            try {
+                await interaction.reply({ content: "There are no birthdays added yet!", ephemeral: true });
+            } catch (error) {
+                console.error('Failed to send ephemeral message:', error);
+            }
+            return;
+        }
     }
 
     async onUpdate() {
