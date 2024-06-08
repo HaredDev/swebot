@@ -39,5 +39,25 @@
     {
         "name" : "msgmod",
         "description" : "Message the moderator team button"
+    },
+    {
+        "name" : "birthday",
+        "description" : "Set your birthday",
+        "options": [
+            {
+                "name": "date",
+                "description": "Set your birthday usuing following format yyyy-mm-dd",
+                "type": 3,
+                "required": false,
+                "autocomplete": false
+            },
+            {
+                "name": "user",
+                "description": "Get users birthday",
+                "type": 6,
+                "required": false,
+                "autocomplete": false
+            }
+        ]
     }
 ]

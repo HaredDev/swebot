@@ -29,12 +29,14 @@ dcClient = client;
         const {MsgAsBot} = require('./commands/msgasbot.js');
         const {Set} = require('./commands/set.js');
         const {Spank} = require('./commands/spank.js');
+        const {Birthday} = require('./commands/birthday.js');
 
         const commandObj = [
             new MsgMod(this),
             new MsgAsBot(this),
             new Set(this),
-            new Spank(this)
+            new Spank(this),
+            new Birthday(this)
         ]
 
 
@@ -60,13 +62,21 @@ dcClient = client;
             }.bind(this), 5000);
         });
 
+        setInterval(function() {
+            commandObj.forEach(element => {
+                if(this.hasFunction(element.onUpdate)){
+                    element.onUpdate();
+                }
+            });
+        }.bind(this), 5000);
+
         client.on('interactionCreate', async interaction => {
 
             if (interaction.isCommand()){
                 const { commandName } = interaction;
                 commandObj.forEach(element => {
                     if(this.hasFunction(element.onCommand) && element.commandName() === commandName){
-                    element.onCommand(interaction);
+                        element.onCommand(interaction);
                     }
                 });
 
