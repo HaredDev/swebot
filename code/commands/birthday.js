@@ -73,6 +73,7 @@ class Birthday{
     }
 
     async sayUserBirthday(user, isSender) {
+        let storage = this.core.storage;
         if(Array.isArray(storage["birthdays"])) {
             let userExist = false;
             storage.birthdays.forEach(time => {
