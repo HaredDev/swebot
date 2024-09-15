@@ -1,8 +1,10 @@
+const { load } = require('cheerio');
 const moment = require('moment-timezone');
 
 const timeZone = 'Europe/London';
 const regex = /^\d{4}-\d{2}-\d{2}$/;
 const channelID = "1216472875058462720";
+const webhookID = 0;
 
 class Birthday{
 
@@ -123,10 +125,10 @@ class Birthday{
     async sendBdMessage(userID, age) {
         let channel = this.core.dcClient.channels.cache.get(channelID);
         const embed = this.core.createEmbedBuilder();
+        embed.setColor(0xFFC0CB);
         embed.setTitle("It's someones birthday today!");
-        embed.setDescription("# It's " + `<@${userID}>` + " birthday today!\nThey are now " + age + " years old!\nHappy Birthday! " + `<@${userID}>`);
-        let msg = { embeds: [embed] };
-        channel.send(msg);
+        embed.setDescription("# 🥳 🎂 🎉\n# It's " + `<@${userID}>` + " birthday today!\n# They are now " + age + " years old!\nHappy Birthday! " + `<@${userID}>`);
+        this.core.sendAsWebHook(webhookID, embed);
     }
 
     calculateYearsBetween(date1, date2) {

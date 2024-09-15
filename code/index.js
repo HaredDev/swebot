@@ -1,4 +1,4 @@
-const { Client, ChannelType, PermissionsBitField, GatewayIntentBits, ButtonBuilder, TextInputBuilder, TextInputStyle, ModalBuilder, ActionRowBuilder, EmbedBuilder, ButtonStyle } = require('discord.js');
+const { Client, ChannelType, PermissionsBitField, GatewayIntentBits, ButtonBuilder, WebhookClient, TextInputBuilder, TextInputStyle, ModalBuilder, ActionRowBuilder, EmbedBuilder, ButtonStyle } = require('discord.js');
 const { InteractionResponseType } = require('discord-interactions');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages] });
 const { REST } = require('@discordjs/rest');
@@ -13,6 +13,8 @@ const { time, Console } = require('console');
 
 
 class Core{
+
+hooks = [];
 
 storage = JSON.parse('{}');
 
@@ -30,21 +32,26 @@ dcClient = client;
         const {Set} = require('./commands/set.js');
         const {Spank} = require('./commands/spank.js');
         const {Birthday} = require('./commands/birthday.js');
+        const {Insta} = require('./commands/Insta.js');
 
         const commandObj = [
             new MsgMod(this),
             new MsgAsBot(this),
             new Set(this),
             new Spank(this),
-            new Birthday(this)
+            new Birthday(this),
+            new Insta(this)
         ]
 
 
         client.once('ready', async () => {
 
             try {
-                const rest = new REST({version: '9'}).setToken(cred.token);
-        
+                const rest = new REST({version: '9'}).setToken(cred.token); 
+                
+                this.hooks[0] = await this.checkAndCreateWebHooks("1216472875058462720", "Birthday Time", "https://www.dropbox.com/scl/fi/ec6ft1jp9os0w581nps5o/birthday-cake.png?rlkey=k76yg57kfeggmvai7xzv1buu6&st=at8lrykq&dl=1");
+                this.hooks[1] = await this.checkAndCreateWebHooks("1216467389290385561", "Insta Updates", "https://www.dropbox.com/scl/fi/pp4eh3aqn18nkcn96wcje/insta.png?rlkey=pkfd6rq9pfbqkeuslrcowggi0&st=v44bp5qv&dl=1");
+
                 console.log('Loading commands!');
         
                 await rest.put(
@@ -117,6 +124,52 @@ dcClient = client;
 
     }
 
+    async checkAndCreateWebHooks(channelID, webhookName, imgUrl) {
+        try {
+            let channel = await this.dcClient.channels.fetch(channelID);
+    
+            const webhooks = await channel.fetchWebhooks();
+            let webhook = webhooks.find(wh => wh.name === webhookName);
+    
+            if (webhook) {
+                return webhook;
+            } else {
+               
+                // Await the creation of the webhook and ensure all required fields are passed
+                webhook = await channel.createWebhook({
+                    avatar: imgUrl,
+                    name: webhookName
+                });
+                
+                return webhook;
+            }
+        } catch (error) {
+            console.error('Error creating or fetching webhook:', error);
+        }
+    }
+
+    async sendAsWebHook(webhookID, msg) {
+        try {
+    
+            //const webhookClient = new WebhookClient({ id: webhook.id, token: webhook.token });
+            let webhook = this.hooks[webhookID];
+            const avatarURL = `https://cdn.discordapp.com/avatars/${webhook.id}/${webhook.avatar}.png`;
+            const name = webhook.name;
+
+            //msg.setThumbnail(avatarURL);
+            msg.setAuthor({ name: webhookID == 0 ? "Birthday Time" : "New Instagram Post", iconURL: avatarURL, url: msg.url})
+            msg.setFooter({ text: 'Message sent by SveBot', iconURL: this.dcClient.user.avatarURL()});
+
+            webhook.send({
+                //content: msg,
+                embeds: [msg],
+                username: name,
+                avatarURL: avatarURL
+            }).catch(console.error);  // Error handling for send failures
+        } catch (error) {
+            console.error('Error sending webhook message:', error);
+        }
+    }
 
     hasFunction(func){
         return typeof func === 'function';
