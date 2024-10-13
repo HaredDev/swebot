@@ -12,11 +12,11 @@ timer = 0;
     }
 
     async onUpdate() {
-        if(this.timer != 0){
+        if(this.timer >= 12) {
+          this.timer = 1;
+        } else {
           this.timer++;
           return;
-        } else if(this.timer >= 12) {
-          this.timer = 1;
         }
 
         let data = await this.fetchData();
